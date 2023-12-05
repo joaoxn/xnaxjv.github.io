@@ -10,6 +10,12 @@
     --default-size-em: 1em;
 }
 
+html {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
 form {
     display: flex;
     justify-content: center;
