@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        :root {
+            --mapSize: 3rem;
+        }
+
+        body {
+            width: 95vw;
+            height: 95vh;
+            display: flex;
+            flex-direction: row;
+            justify-content: center;
+        }
+
+        .controlsAll {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .controlsBottom {
+            display: flex;
+            flex-direction: row;
+        }
+
+        .controls {
+            width: 3em;
+            height: 3em;
+            background-color: rgb(123, 230, 230);
+            border-radius: 0.5em;
+            margin: 0.5em;
+            position: relative;
+        }
+
+        .main {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .mapSize {
+            width: var(--mapSize);
+            height: var(--mapSize);
+            visibility: hidden;
+            position: absolute;
+        }
+
+        .gameBackground {
+            width: 31rem;
+            height: 31rem;
+            background-color: black;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .game {
+            width: 29rem;
+            height: 29rem;
+            position: relative;
+        }
+
+        .wallsHorizontal {
+            height: calc(var(--mapSize)/3*0.5);
+            margin: calc(var(--mapSize)/3);
+            background-color: rgb(100, 100, 50);
+            position: absolute;
+        }
+
+        .wallsVertical {
+            width: calc(var(--mapSize)/3*0.5);
+            margin: calc(var(--mapSize)/3);
+            background-color: rgb(100, 100, 50);
+            position: absolute;
+        }
+
+        #wall1 {
+            width: calc(var(--mapSize)/3*0.5 + var(--mapSize)/3*4*7);
+            left: calc(var(--mapSize)/3*-0.75 + var(--mapSize)/3*4*0);
+            top: calc(var(--mapSize)/3*-0.75 + var(--mapSize)/3*4*0);
+        }
+
+        #wall2 {
+            width: calc(var(--mapSize)/3*0.5 + var(--mapSize)/3*4*7);
+            left: calc(var(--mapSize)/3*-0.75 + var(--mapSize)/3*4*0);
+            top: calc(var(--mapSize)/3*-0.75 + var(--mapSize)/3*4*7);
+        }
+
+        #wall3 {
+            height: calc(var(--mapSize)/3*0.5 + var(--mapSize)/3*4*7);
+            left: calc(var(--mapSize)/3*-0.75 + var(--mapSize)/3*4*0);
+            top: calc(var(--mapSize)/3*-0.75 + var(--mapSize)/3*4*0);
+        }
+
+        #wall4 {
+            height: calc(var(--mapSize)/3*0.5 + var(--mapSize)/3*4*7);
+            left: calc(var(--mapSize)/3*-0.75 + var(--mapSize)/3*4*7);
+            top: calc(var(--mapSize)/3*-0.75 + var(--mapSize)/3*4*0);
+        }
+
+        #wall5 {
+            width: calc(var(--mapSize)/3*0.5 + var(--mapSize)/3*4*2);
+            left: calc(var(--mapSize)/3*-0.75 + var(--mapSize)/3*4*2);
+            top: calc(var(--mapSize)/3*-0.75 + var(--mapSize)/3*4*1);
+        }
+
+        #wall6 {
+            height: calc(var(--mapSize)/3*0.5 + var(--mapSize)/3*4*4);
+            left: calc(var(--mapSize)/3*-0.75 + var(--mapSize)/3*4*1);
+            top: calc(var(--mapSize)/3*-0.75 + var(--mapSize)/3*4*1);
+        }
+
+        #wall7 {
+            width: calc(var(--mapSize)/3*0.5 + var(--mapSize)/3*4*3);
+            left: calc(var(--mapSize)/3*-0.75 + var(--mapSize)/3*4*2);
+            top: calc(var(--mapSize)/3*-0.75 + var(--mapSize)/3*4*6);
+        }
+
+        #wall8 {
+            height: calc(var(--mapSize)/3*0.5 + var(--mapSize)/3*4*2);
+            left: calc(var(--mapSize)/3*-0.75 + var(--mapSize)/3*4*6);
+            top: calc(var(--mapSize)/3*-0.75 + var(--mapSize)/3*4*3);
+        }
+
+        #wall9 {
+            width: calc(var(--mapSize)/3*0.5 + var(--mapSize)/3*4*1);
+            left: calc(var(--mapSize)/3*-0.75 + var(--mapSize)/3*4*4);
+            top: calc(var(--mapSize)/3*-0.75 + var(--mapSize)/3*4*2);
+        }
+
+        #wall10 {
+            height: calc(var(--mapSize)/3*0.5 + var(--mapSize)/3*4*1);
+            left: calc(var(--mapSize)/3*-0.75 + var(--mapSize)/3*4*5);
+            top: calc(var(--mapSize)/3*-0.75 + var(--mapSize)/3*4*1);
+        }
+
+        .gamePlayer {
+            width: var(--mapSize);
+            height: var(--mapSize);
+            margin: calc(var(--mapSize)/3);
+            background-color: white;
+            position: absolute;
+            left: calc(var(--mapSize)/3*4*0);
+            top: calc(var(--mapSize)/3*4*0);
+        }
+
+        .gameBox {
+            width: var(--mapSize);
+            height: var(--mapSize);
+            margin: calc(var(--mapSize)/3);
+            background-color: rgb(255, 122, 61);
+            position: absolute;
+            left: calc(var(--mapSize)/3*4*3);
+            top: calc(var(--mapSize)/3*4*1);
+        }
+
+        .gameGoal {
+            width: calc(var(--mapSize)/3*3.5);
+            height: calc(var(--mapSize)/3*3.5);
+            margin: calc(var(--mapSize)/3*0.75);
+            background-color: gray;
+            position: absolute;
+            left: calc(var(--mapSize)/3*4*3);
+            top: calc(var(--mapSize)/3*4*3);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .gameGoal div {
+            width: calc(var(--mapSize)/3*2.5);
+            height: calc(var(--mapSize)/3*2.5);
+            background-color: rgb(208, 52, 52);
+        }
+
+        .buttons {
+            display: flex;
+            flex-direction: row;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .buttonsMiddle {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .buttonsLocal {
+            width: 10.5em;
+            display: flex;
+            flex-direction: row;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .buttonsLocal button {
+            width: 100%;
+            height: 2em;
+            background-color: azure;
+            border-radius: 0.5em;
+        }
+
+        #buttonReset {
+            background-color: rgb(255, 200, 200);
+        }
+
+        .buttons button:hover {
+            transition: 0.5s;
+            cursor: pointer;
+            scale: 1.1;
+        }
+
+        .buttonsLevels {
+            display: flex;
+            flex-direction: row;
+        }
+
+        .buttonsLevels button {
+            width: 3em;
+            height: 3em;
+            background-color: azure;
+            border-radius: 0.5em;
+            margin: 1em;
+        }
+    </style>
+    <title>Jogo</title>
+</head>
+
+<body>
+    <div class="main">
+        <div class="mapSize"></div>
+        <div class="buttons">
+            <div class="buttonsMiddle">
+                <div class="buttonsLocal">
+                    <button id="buttonReset" onclick="refreshPage()">RESET</button>
+                </div>
+                <div class="buttonsLevels">
+                    <button onclick="redirectToLink(1)">1</button><button onclick="redirectToLink(2)">2</button><button
+                        onclick="redirectToLink(3)">3</button>
+                </div>
+            </div>
+            <div class="controlsAll">
+                <button class="controls" onclick="moveDown(-1)">^</button>
+                <div class="controlsBottom">
+                    <button class="controls" onclick="moveRight(-1)"><</button>
+                    <button class="controls" onclick="moveDown(1)">v</button><button class="controls" onclick="moveRight(1)">></button>
+                </div>
+            </div>
+        </div>
+        <div class="gameBackground">
+            <div class="game">
+                <div class="walls">
+                    <div id="wall1" class="wallsHorizontal collidable"></div>
+                    <div id="wall2" class="wallsHorizontal collidable"></div>
+                    <div id="wall3" class="wallsVertical collidable"></div>
+                    <div id="wall4" class="wallsVertical collidable"></div>
+                    <div id="wall5" class="wallsHorizontal collidable"></div>
+                    <div id="wall6" class="wallsVertical collidable"></div>
+                    <div id="wall7" class="wallsHorizontal collidable"></div>
+                    <div id="wall8" class="wallsVertical collidable"></div>
+                    <div id="wall9" class="wallsHorizontal collidable"></div>
+                    <div id="wall10" class="wallsVertical collidable"></div>
+                </div>
+                <div id="goal1" class="gameGoal">
+                    <div></div>
+                </div>
+                <div id="box1" class="gameBox collidable pushable"></div>
+                <div id="player1" class="gamePlayer collidable"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let rootStyles = getComputedStyle(document.documentElement); // Get root element styles (all CSS variables)
+        let mapSizeUnit = rootStyles.getPropertyValue('--mapSize'); //example: 3em
+        let mapSize = parseFloat(mapSizeUnit.match(/-?\d+(\.\d+)?/)[0]); //example: 3
+        let mapUnit = mapSizeUnit.replace(/-?\d+(\.\d+)?/, ''); //example: em
+        let gamePlayer = document.getElementsByClassName("gamePlayer")[0];
+        let wallsHorizontal = document.getElementsByClassName("wallsHorizontal");
+        let wallsVertical = document.getElementsByClassName("wallsVertical");
+        let collidables = document.getElementsByClassName("collidable");
+        let boxes = Array.from(document.getElementsByClassName("gameBox"));
+        let goals = document.getElementsByClassName("gameGoal");
+        let completed = [];
+        completed.length = boxes.length;
+        completed = completed.map(a => a = false);
+        let overlaps = false;
+        let isVariableDeclared_pixelToDefaultRatio = 0;
+        let pixelToDefaultRatio = computedStyleNumber(document.getElementsByClassName("mapSize")[0], "width") / mapSize;
+        console.log("Pixel to Default Ratio: " + pixelToDefaultRatio);
+        console.log("Map size: " + mapSizeUnit);
+
+        document.addEventListener("keypress", function onEvent(event) { //Move with WASD
+            switch (event.key) {
+                case 'w': moveDown(-1); break;
+                case 's': moveDown(1); break;
+                case 'a': moveRight(-1); break;
+                case 'd': moveRight(1); break;
+            }
+        });
+
+        document.addEventListener("keydown", function onEvent(event) { //Move with arrows
+            switch (event.key) {
+                case 'ArrowUp': moveDown(-1); break;
+                case 'ArrowDown': moveDown(1); break;
+                case 'ArrowLeft': moveRight(-1); break;
+                case 'ArrowRight': moveRight(1); break;
+            }
+        });
+
+        function refreshPage() {
+            location.reload(); // This will refresh the page
+        }
+
+        function redirectToLink(a) {
+            if (completed.every(a => a === true)) {
+                switch (a) {
+                    case '1': window.location.href = "sokobanL1.html"
+                }
+            }
+        }
+
+        function computedStyleNumber(a, b) { //returns value in pixels/pixelToDefaultRatio (should be converted to mapUnit)
+            if (isVariableDeclared_pixelToDefaultRatio) { //if variable pixelToDefaultRatio has already been declared
+                return parseFloat(window.getComputedStyle(a)[b].match(/-?\d+(\.\d+)?/)[0]) / pixelToDefaultRatio
+            } else { //declaring variable
+                isVariableDeclared_pixelToDefaultRatio = 1
+                return parseFloat(window.getComputedStyle(a)[b].match(/-?\d+(\.\d+)?/)[0])
+            }
+        }
+
+        function checkOverlap(a, b, c, d) { //a <= b, c <= d, a <= c (n = new)
+            if (a <= b) { an = a; bn = b } else { an = b; bn = a } //orders a and b so an <= bn
+            if (c <= d) { cn = c; dn = d } else { cn = d; dn = c } //orders c and d so cn <= dn
+            if (an <= cn) { ann = an; bnn = bn; cnn = cn; dnn = dn } else { ann = cn; bnn = dn; cnn = an; dnn = bn }
+            //orders both ranges so ann <= cnn
+            // Check if there's an overlap between the ranges
+            return (bnn > cnn); //returns boolean
+        }
+
+        function checkCollision(element, newLeft, newTop) { //operates complex collision calculation:
+            //checks if there is any part of any collidable through the path of the element. (Path is always to same direction)
+            oldTop = computedStyleNumber(element, "top")
+            oldLeft = computedStyleNumber(element, "left")
+            let elementWidth = computedStyleNumber(element, "width")
+            let squaredElementSide = Math.sqrt(computedStyleNumber(element, "height") * elementWidth)
+
+            //finds a, b1 and b2 for the general inequation: ax + b1 < y < ax + b2 that fits the old and new player's position
+            a = (newTop - oldTop) / (newLeft - oldLeft) //Gets angular coefficient of the extreme lines
+
+            if (newLeft >= oldLeft) {
+                leftExtreme = oldLeft
+                rightExtreme = newLeft + elementWidth
+            } else {
+                leftExtreme = newLeft
+                rightExtreme = oldLeft + elementWidth
+            }
+            if (newTop >= oldTop) {
+                topExtreme = oldTop
+                bottomExtreme = newTop + computedStyleNumber(element, "height")
+            } else {
+                topExtreme = newTop
+                bottomExtreme = oldTop + computedStyleNumber(element, "height")
+            }
+
+            if (a >= 0) { //inverts points selected if negative (needed to keep with furthest extremes selected)
+                b1 = (oldLeft * newTop - newLeft * oldTop) / (oldLeft - newLeft) //gets linear coefficient of one extreme line
+                b2 = b1 - ((a * (oldLeft + squaredElementSide) + b1) - (oldTop - squaredElementSide)) //gets linear coefficient of other extreme line
+            } else {
+                b1 = ((oldLeft) * newTop - (newLeft) * oldTop) / ((oldLeft) - (newLeft))
+                b2 = b1 - ((a * ((oldLeft) + squaredElementSide) + b1) - (oldTop + squaredElementSide))
+            }
+            console.log(a, b1, b2) // Check if any part of the rectangle is inside the zone
+
+            for (let i = 0; i < collidables.length; i++) {
+                if (collidables[i] != element) {
+                    let left = computedStyleNumber(collidables[i], "left"); // First point of the rectangle (top-left corner)
+                    let top = computedStyleNumber(collidables[i], "top");
+                    let right = computedStyleNumber(collidables[i], "left") + computedStyleNumber(collidables[i], "width"); // Second point of the rectangle (bottom-right corner)
+                    let bottom = computedStyleNumber(collidables[i], "top") + computedStyleNumber(collidables[i], "height");
+                    console.log(collidables[i], left, top, right, bottom)
+                    // Check if any corner of the rectangle falls within the zone
+                    if (
+                        checkOverlap(top, bottom, topExtreme, bottomExtreme) && checkOverlap(left, right, leftExtreme, rightExtreme)
+                    ) { // At least one part of the rectangle is inside the zone
+                        return [true, collidables[i]];
+                    }
+                }
+                if (i === collidables.length - 1) { // Last loop, no parts of any rectangle found inside the zone
+                    return [false]
+                }
+            }
+        }
+
+        function moveDown(a) { // a = amount
+            oldTop = computedStyleNumber(gamePlayer, "top")
+            newLeft = computedStyleNumber(gamePlayer, "left") // remains unchanged
+            newTop = oldTop + mapSize * 4 / 3 * a;
+            let collision = checkCollision(gamePlayer, newLeft, newTop)
+            if (collision[0]) {
+                if (collision[1].classList.contains("pushable")) {
+                    let collisionPushable = checkCollision(collision[1], computedStyleNumber(collision[1], "left"), newTop + mapSize * 4 / 3 * Math.sign(a))
+                    if (collisionPushable[0]) {
+                        //code for pushing multiple elements here (2nd pushable disabled (max = 1))
+                    } else {
+                        collision[1].style.top = newTop + mapSize * 4 / 3 * Math.sign(a) + mapUnit
+                        gamePlayer.style.top = newTop + mapUnit
+                        goalChecker(collision[1])
+                        return true
+                    }
+                } else { return false }
+            } else {
+                gamePlayer.style.top = newTop + mapUnit
+            }
+        }
+
+        function moveRight(a) { // a = amount
+            oldLeft = computedStyleNumber(gamePlayer, "left")
+            newTop = computedStyleNumber(gamePlayer, "top") //remains unchanged
+            newLeft = oldLeft + mapSize * 4 / 3 * a;
+            let collision = checkCollision(gamePlayer, newLeft, newTop)
+            if (collision[0]) {
+                if (collision[1].classList.contains("pushable")) {
+                    let collisionPushable = checkCollision(collision[1], newLeft + mapSize * 4 / 3 * Math.sign(a), computedStyleNumber(collision[1], "top"))
+                    if (collisionPushable[0]) {
+                        //code for pushing multiple elements here (2nd pushable disabled (max = 1))
+                    } else {
+                        collision[1].style.left = newLeft + mapSize * 4 / 3 * Math.sign(a) + mapUnit
+                        gamePlayer.style.left = newLeft + mapUnit
+                        goalChecker(collision[1])
+                        return true
+                    }
+                } else { return false }
+            } else {
+                gamePlayer.style.left = newLeft + mapUnit
+            }
+        }
+
+        function goalChecker(element) {
+            let left = computedStyleNumber(element, "left")
+            let right = left + computedStyleNumber(element, "width")
+            let top = computedStyleNumber(element, "top")
+            let bottom = top + computedStyleNumber(element, "height")
+
+            for (i = 0; i < goals.length; i++) {
+                let goalLeft = computedStyleNumber(goals[i], "left")
+                let goalTop = computedStyleNumber(goals[i], "top")
+                if (
+                    checkOverlap(left, right, goalLeft, goalLeft + computedStyleNumber(goals[i], "width")) &&
+                    checkOverlap(top, bottom, goalTop, goalTop + computedStyleNumber(goals[i], "height"))
+                ) {
+                    completed[boxes.indexOf(element)] = true
+                    if (completed.every(a => a === true)) {
+                        //do completion
+                        document.getElementsByClassName("game")[0].style.backgroundColor = "#005000"
+                        break
+                    }
+                }
+                if (i === goals.length - 1) {
+                    completed[boxes.indexOf(element)] = false
+                    document.getElementsByClassName("game")[0].style.backgroundColor = "#000000"
+                }
+            }
+        }
+    </script>
+</body>
+
+</html>
