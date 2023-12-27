@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audio Player</title>
+    <style>
+        * {
+            margin: 0.5rem;
+        }
+
+        html,
+        body,
+        .page,
+        .page>* {
+            margin: 0;
+        }
+
+        html {
+            min-width: 100vw;
+            min-height: 100vh;
+            overflow: auto;
+        }
+
+        html,
+        body,
+        .page {
+            width: 100%;
+            height: 100%;
+        }
+
+        .page {
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .sectionInfo,
+        .audioControls {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .sectionMain {
+            height: 100%;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .audioControls * {
+            transform: scale(1);
+        }
+
+        .sectionInfo {
+            width: 0;
+            height: 0;
+            /* set to 20rem after files are loaded */
+            justify-content: left;
+            overflow: auto;
+        }
+
+        .sectionInfo:hover {
+            overflow-y: auto;
+        }
+
+        .buttonsAudioControl {
+            display: flex;
+            flex-direction: row;
+        }
+
+        .playlist {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .playlistCurrent {
+            padding: 2rem;
+            background-color: blanchedalmond;
+        }
+
+        .largeFont {
+            font-size: large;
+        }
+
+        .bold {
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="page">
+        <main class="sectionMain">
+            <div class="audioControls">
+                <input class="audioInput" type="file" multiple />
+                <input type="submit" onclick="loadFiles('.audioInput', 0)" />
+                <div class="buttonsAudioControl">
+                    <button class="audioBack" onclick="buttonBackAction()">⏮</button>
+                    <button class="audioPlay" onclick="buttonPlayAction()">▶</button>
+                    <button class="audioNext" onclick="buttonNextAction()">⏭</button>
+                    <button class="audioLoop" onclick="buttonLoopAction()">↪</button>
+                    <button class="audioAutoPlay" onclick="buttonAutoPlayAction()">⤵</button>
+                    <button class="audioShuffle" onclick="buttonShuffleAction()">➡</button>
+                </div>
+                <audio controls class="audioToPlay">
+                    <source />
+                </audio>
+            </div>
+        </main>
+
+        <div class="sectionInfo">
+            <span class="playlistCurrent largeFont bold"></span>
+            <div class="playlist">
+            </div>
+        </div>
+    </div>
+    <script>
+        let audioFiles, currentAudio, originalAudioFiles, filesLoaded;
+        let playing = false;
+        let buttonPlay = document.querySelector(".audioPlay") //declared on global scope
+        //buttonPlay also used in buttonBackAction() and buttonNextAction()
+        let buttonPlayState = "play";
+        let buttonLoopState = 0;
+        let buttonAutoPlayState = 0;
+        let buttonShuffleState = 0;
+        let audioPlayer = document.querySelector(".audioToPlay")
+        let ascendingNumbers = [];
+        let shuffledNumbers = [];
+        let playlistHTML = document.querySelector(".playlist")
+        let playlistAudio = document.querySelector(".playlistAudio")
+        let playlistCurrent = document.querySelector(".playlistCurrent")
+        let sectionInfoProportion = 70;
+
+        updateResizeBased(); //forces event when script is loaded;
+
+        window.addEventListener('resize', updateResizeBased);
+
+        function updateResizeBased() {
+            let html = document.querySelector('html');
+            let pageDiv = document.querySelector('.page');
+            let sectionInfoStyle = document.querySelector('.sectionInfo').style;
+            let audioControls = document.querySelector(".audioControls");
+            resizeControls();
+            if (computedStyleNumber(html, 'height') > computedStyleNumber(html, 'width')) { // if screen is vertical
+                pageDiv.style.flexDirection = "column"; //makes div .sectionInfo go below main
+                //configures to be hidden until file is loaded
+                if (!filesLoaded) {
+                    sectionInfoStyle.height = 0;
+                    sectionInfoStyle.width = "100%";
+                }
+            } else { //screen is horizontal
+                pageDiv.style.flexDirection = "row";
+                //configures to be hidden until file is loaded
+                if (!filesLoaded) {
+                    sectionInfoStyle.height = "100%";
+                    sectionInfoStyle.width = 0;
+                };
+            };
+        }
+
+        function resizeControls() {
+            let html = document.querySelector('html');
+            let audioControls = document.querySelector(".audioControls");
+            let htmlWidth = computedStyleNumber(html, 'width');
+            let htmlHeight = computedStyleNumber(html, 'height');
+            if (htmlHeight * 500 / 350 > htmlWidth) {
+                if (htmlWidth / 500 > 0.8) {
+                    audioControls.style.transform = "scale(" + htmlWidth / 500 + ")"; // 560 is defined manually by testing
+                } else {
+                    audioControls.style.transform = "scale(" + 0.8 + ")"; // for smaller values, it resizes by itself
+                }
+            } else {
+                audioControls.style.transform = "scale(" + htmlHeight / 350 + ")"; // 400 is defined manually by testing
+            }
+        }
+
+        audioPlayer.addEventListener('ended', function () {
+            if (buttonAutoPlayState === 1) {
+                if (buttonLoopState === 1) {
+                    selectAudio(audioFiles, findFileIndex(audioFiles, currentAudio))
+                    audioPlayer.play()
+                } else {
+                    let nextFile = findFileIndex(audioFiles, currentAudio) + 1
+                    if (nextFile > audioFiles.length - 1) {
+                        if (buttonLoopState === 2) {
+                            selectAudio(audioFiles, nextFile - audioFiles.length);
+                            audioPlayer.play();
+                        }
+                    } else {
+                        selectAudio(audioFiles, nextFile);
+                        audioPlayer.play();
+                    }
+                }
+            } else { buttonPlayAction() };
+        });
+
+        function computedStyleNumber(elem, style) {
+            return parseFloat(window.getComputedStyle(elem)[style].match(/-?\d+(\.\d+)?/)[0])
+        }
+
+        function loadFiles(input, pos) {
+            audioFiles = document.querySelectorAll(input)[pos].files;
+            selectAudio(audioFiles, 0);
+            for (i = 0; i < audioFiles.length; i++) {
+                ascendingNumbers.push(i);
+            };
+            let sectionInfoStyle = document.querySelector(".sectionInfo").style
+            if (document.querySelector('.pageDiv') === "column") { //is vertical
+                sectionInfoStyle.height = sectionInfoProportion + "%";
+                sectionInfoStyle.width = "100%";
+            } else { //is horizontal
+                sectionInfoStyle.width = sectionInfoProportion + "%";
+                sectionInfoStyle.height = "100%";
+            }
+            filesLoaded = true;
+        };
+
+        function selectAudio(fileList, pos) {
+            if (pos < 0) {
+                pos = fileList.length + pos;
+            };
+            currentAudio = fileList[pos];
+            let sourceAudio = audioPlayer.querySelector("source");
+            audioPlayer.src = URL.createObjectURL(fileList[pos]);
+
+            playlistCurrent.textContent = "Now Playing: " + (findFileIndex(audioFiles, currentAudio) + 1) + " - " + currentAudio.name;
+            makePlaylistHTML(playlistHTML, audioFiles);
+        }
+
+        function findFileIndex(fileList, file) {
+            for (let i = 0; i < fileList.length; i++) {
+                if (fileList[i].name === file.name) {
+                    return i; // Return the index if the file name matches
+                }
+            }
+            return -1; // Return -1 if the file is not found
+        }
+
+        function buttonBackAction() {
+            let buttonBack = document.querySelector(".audioBack");
+            selectAudio(audioFiles, findFileIndex(audioFiles, currentAudio) - 1);
+            if (buttonAutoPlayState === 1) { audioPlayer.play() } else if (buttonPlayState === 'pause') {
+                buttonPlay.textContent = "▶";
+                buttonPlayState = "play";
+            };
+        }
+
+        function buttonPlayAction() {
+            switch (buttonPlayState) {
+                case 'play':
+                    audioPlayer.play()
+                    buttonPlay.textContent = "⏸";
+                    buttonPlayState = "pause";
+                    break
+                case 'pause':
+                    audioPlayer.pause()
+                    buttonPlay.textContent = "▶";
+                    buttonPlayState = "play";
+                    break
+            }
+            console.log("buttonPlayState: " + buttonPlayState);
+        }
+
+        function buttonNextAction() {
+            let newFileIndex = (findFileIndex(audioFiles, currentAudio) + 1) % audioFiles.length
+            selectAudio(audioFiles, newFileIndex)
+            if (buttonAutoPlayState === 1) { audioPlayer.play() } else if (buttonPlayState === 'pause') {
+                buttonPlay.textContent = "▶";
+                buttonPlayState = "play";
+            };
+
+        }
+
+        function buttonLoopAction() {
+            let buttonLoop = document.querySelector(".audioLoop")
+            switch (buttonLoopState) {
+                case 1:
+                    buttonLoop.textContent = "🔁";
+                    buttonLoopState = 2;
+                    break;
+                case 2: //case 2 + default
+                    buttonLoop.textContent = "↪";
+                    buttonLoopState = 0;
+                    break;
+                default: //case 0 + default
+                    buttonLoop.textContent = "🔂";
+                    buttonLoopState = 1;
+                    break;
+            }
+            console.log("buttonLoopState: " + buttonLoopState);
+        }
+
+        function buttonAutoPlayAction() {
+            let buttonAutoPlay = document.querySelector(".audioAutoPlay")
+            switch (buttonAutoPlayState) {
+                case 1:
+                    buttonAutoPlay.textContent = "⤵";
+                    buttonAutoPlayState = 0;
+                    break;
+                default: //case 0 + default
+                    buttonAutoPlay.textContent = "🔃";
+                    buttonAutoPlayState = 1;
+                    break;
+            }
+            console.log("buttonAutoPlayState: " + buttonAutoPlayState)
+        }
+
+        function shuffleArraySmart(arrayInput) { //shuffles the array but places ith element in the first position
+            let array = arrayInput.slice();
+            i = findFileIndex(audioFiles, currentAudio);
+            ithElement = array[i];
+            console.log(array);
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            // Insert the ith element into the index 0 position
+            array.splice(array.indexOf(ithElement), 1)
+            array.unshift(ithElement);
+            console.log(array)
+            return array;
+        }
+
+        // function shuffleArraySmart(array) { //shuffles the array but keeps index n untouched
+        //     for (let index = array.length - 1; index > 0; index--) {
+        //         if (index !== i) {
+        //             const j = Math.floor(Math.random() * (index + 1));
+        //             if (j !== i) {
+        //                 [array[index], array[j]] = [array[j], array[index]];
+        //             }
+        //         }
+        //     }
+
+        // for (let i = array.length - 1; i > 0; i--) {
+        //     const j = Math.floor(Math.random() * i) + 1;
+        //     [array[i], array[j]] = [array[j], array[i]];
+        // }
+        // array[0] = findFileIndex(audioFiles, currentAudio);
+        // console.log(array);
+        // return array;
+        // }
+
+        function FileListShuffleMatchArray(fileList, array) {
+            let dataTransfer = new DataTransfer(); //creates storage for shuffled fileList
+
+            // Reorder the files based on the indices
+            array.forEach(index => {
+                let file = fileList.item(index); // Get the file at the specific index
+                dataTransfer.items.add(file); // Add the file to the reordered FileList
+            });
+            return dataTransfer.files;
+        }
+
+        function buttonShuffleAction() {
+            let buttonShuffle = document.querySelector(".audioShuffle")
+            switch (buttonShuffleState) {
+                case 1:
+                    audioFiles = originalAudioFiles;
+
+                    buttonShuffle.textContent = "➡";
+                    buttonShuffleState = 0;
+                    break;
+                default: //case 0 + default
+                    originalAudioFiles = audioFiles;
+                    shuffledNumbers = shuffleArraySmart(ascendingNumbers);
+                    audioFiles = FileListShuffleMatchArray(audioFiles, shuffledNumbers);
+
+                    buttonShuffle.textContent = "🔀";
+                    buttonShuffleState = 1;
+                    break;
+            }
+            console.log("buttonShuffleState: " + buttonShuffleState);
+
+            playlistCurrent.textContent = "Now Playing: 1 - " + currentAudio.name;
+            makePlaylistHTML(playlistHTML, audioFiles);
+        }
+
+        //         function getArrayOfFileNames() {
+        //             let listOfFiles = [];
+        //             for (i = 0; i < audioFiles.length - 1; i++) {
+        //                 if (audioFiles[i] === currentAudio) {
+        //                     listOfFiles.push(i + " - " + audioFiles[i].name);
+        //                 } else {
+        //                     listOfFiles.push(i + " - " + audioFiles[i].name);
+        //                 }
+        //             }
+        //             if (audioFiles.length - 1 >= 0) {
+        //                 if (audioFiles[i] === currentAudio) {
+        //                     listOfFiles += `
+        // ` + "--> audioFiles[" + (audioFiles.length - 1) + "]: " + audioFiles[audioFiles.length - 1].name + `
+        // `;
+        //                 } else {
+        //                     listOfFiles += "    audioFiles[" + (audioFiles.length - 1) + "]: " + audioFiles[audioFiles.length - 1].name;
+        //                 }
+        //             }
+        //             return listOfFiles
+        //         }
+
+        function makePlaylistHTML(parent, fileList) {
+            while (parent.firstChild) {
+                parent.removeChild(parent.firstChild);
+            }
+            let element, node;
+            for (i = 0; i < fileList.length; i++) {
+                element = document.createElement("p");
+                node = document.createTextNode(i + 1 + " - " + fileList[i].name);
+                element.classList.add("playlistAudio" + i);
+                if (fileList[i] === currentAudio) {
+                    element.classList.add("bold");
+                }
+                element.appendChild(node);
+                parent.appendChild(element);
+            }
+        }
+
+        // function updatePlaylistHTML(playlist, fileList) {
+        //     let ithElement
+        //     for (i = 0; i < fileList.length; i++) {
+        //         ithElement = playlist.getElementsByClassName("playlistAudio" + i)[0]
+        //         ithElement = fileList[i].name;
+        //         if (ithElement !== currentAudio) {
+        //             ithElement.classList.remove("bold");
+        //         } else { ithElement.classList.add("bold") }
+        //     }
+        // }
+
+        // function removePlaylistHTML(playlist) {
+        //     while (playlist.firstChild) {
+        //         playlist.removeChild(parentElement.firstChild);
+        //     }
+        // }
+    </script>
+</body>
+
+</html>
